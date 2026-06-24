@@ -26,6 +26,7 @@
             >
               <path d="M0,0 L0,6 L8,3 z" fill="#ffb28a" />
             </marker>
+
             <marker
               id="generate-arrow"
               markerWidth="8"
@@ -66,11 +67,12 @@
             <span class="node-index">{{ String(index + 1).padStart(2, '0') }}</span>
             <span class="node-type">{{ node.type }}</span>
           </div>
+
           <div class="node-title">
             {{ node.title }}
           </div>
-          <span class="node-action">Ver detalle</span>
 
+          <span class="node-action">Ver detalle</span>
         </article>
 
         <div class="cluster cluster-data">
@@ -105,7 +107,12 @@
         role="dialog"
         :aria-label="`Detalle de ${selectedNode.title}`"
       >
-        <button class="modal-close" type="button" aria-label="Cerrar detalle" @click="closePopup">
+        <button
+          class="modal-close"
+          type="button"
+          aria-label="Cerrar detalle"
+          @click="closePopup"
+        >
           x
         </button>
 
@@ -123,7 +130,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 
 const props = defineProps({
   step: {
@@ -131,6 +138,42 @@ const props = defineProps({
     default: 0
   }
 })
+
+const REPO_BASE = '/Presentation-IA-agent/'
+
+onMounted(() => {
+  fixBrokenGitHubPagesUrl()
+})
+
+const fixBrokenGitHubPagesUrl = () => {
+  if (typeof window === 'undefined') return
+
+  const { origin, pathname, hash } = window.location
+
+  const duplicatedBase = '/Presentation-IA-agent/Presentation-IA-agent/'
+  const hasDuplicatedBase = pathname.startsWith(duplicatedBase)
+  const hashHasRepoBase = hash.startsWith('#/Presentation-IA-agent/')
+
+  if (!hasDuplicatedBase && !hashHasRepoBase) return
+
+  let slideNumber = null
+
+  if (hashHasRepoBase) {
+    slideNumber = hash.replace('#/Presentation-IA-agent/', '').split('/')[0]
+  }
+
+  if (!slideNumber && hasDuplicatedBase) {
+    slideNumber = pathname.replace(duplicatedBase, '').split('/')[0]
+  }
+
+  const cleanSlide = slideNumber && !Number.isNaN(Number(slideNumber))
+    ? slideNumber
+    : ''
+
+  const cleanUrl = `${origin}${REPO_BASE}#/${cleanSlide}`
+
+  window.location.replace(cleanUrl)
+}
 
 const nodes = [
   {
@@ -494,17 +537,14 @@ const pathLit = (targetId) => {
 .node-title {
   display: block;
   width: 100%;
+  margin: 0;
+  min-height: 30px;
   padding: 0;
   border: 0;
   color: #8bd7ff;
   background: transparent;
   font: inherit;
   text-align: left;
-}
-
-.node-title {
-  margin: 0;
-  min-height: 30px;
   word-break: normal;
   overflow-wrap: anywhere;
   font-size: 28px;
