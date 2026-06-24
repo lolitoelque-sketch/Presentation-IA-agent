@@ -136,6 +136,12 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 
+const CANVAS_WIDTH = 2400
+const CANVAS_HEIGHT = 1300
+const NODE_WIDTH = 250
+const NODE_HEIGHT = 108
+const DESKTOP_SCALE = 0.74
+
 const nodes = [
   {
     id: 'user',
@@ -263,11 +269,13 @@ const cameraPositions = [
   { x: -805, y: -5, rotate: -0.5 }
 ]
 
-const canvasScale = 0.74
-
 const activeStep = ref(0)
 const selectedNodeId = ref(null)
 const focusedNodeId = ref(null)
+const viewportSize = ref({
+  width: 1280,
+  height: 720
+})
 
 const selectedNode = computed(() => {
   return nodes.find((node) => node.id === selectedNodeId.value)
@@ -287,13 +295,53 @@ const cameraStep = computed(() => {
   return selectedIndex
 })
 
+const isCompactViewport = computed(() => {
+  const { width, height } = viewportSize.value
+  return width <= 900 || height <= 560
+})
+
+const canvasScale = computed(() => {
+  if (!isCompactViewport.value) {
+    return DESKTOP_SCALE
+  }
+
+  const { width, height } = viewportSize.value
+  const fitScale = Math.min(width / 640, height / 520) * 0.86
+  return Math.min(0.68, Math.max(0.52, fitScale))
+})
+
 const cameraStyle = computed(() => {
-  const position = cameraPositions[cameraStep.value] || cameraPositions[0]
+  const basePosition = cameraPositions[cameraStep.value] || cameraPositions[0]
+  const scale = canvasScale.value
+
+  if (!isCompactViewport.value) {
+    return {
+      transform: `translate(-50%, -50%) translate3d(${basePosition.x}px, ${basePosition.y}px, 0) scale(${scale}) rotate(${basePosition.rotate}deg)`
+    }
+  }
+
+  const node = nodes[cameraStep.value] || nodes[0]
+  const targetX = node.x + NODE_WIDTH / 2
+  const targetY = node.y + NODE_HEIGHT / 2
+  const lift = viewportSize.value.height <= 520 ? 22 : 46
+  const x = -scale * (targetX - CANVAS_WIDTH / 2)
+  const y = -scale * (targetY - CANVAS_HEIGHT / 2) - lift
 
   return {
-    transform: `translate(-50%, -50%) translate3d(${position.x}px, ${position.y}px, 0) scale(${canvasScale}) rotate(${position.rotate}deg)`
+    transform: `translate(-50%, -50%) translate3d(${x}px, ${y}px, 0) scale(${scale}) rotate(${basePosition.rotate * 0.4}deg)`
   }
 })
+
+const updateViewportSize = () => {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  viewportSize.value = {
+    width: window.innerWidth,
+    height: window.innerHeight
+  }
+}
 
 const goToStep = (step) => {
   const minStep = 0
@@ -332,11 +380,16 @@ const handleKeyboardNavigation = (event) => {
 }
 
 onMounted(() => {
+  updateViewportSize()
+  window.addEventListener('resize', updateViewportSize, { passive: true })
   window.addEventListener('keydown', handleKeyboardNavigation, true)
 })
 
 onBeforeUnmount(() => {
-  window.removeEventListener('keydown', handleKeyboardNavigation, true)
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('resize', updateViewportSize)
+    window.removeEventListener('keydown', handleKeyboardNavigation, true)
+  }
 })
 
 const togglePopup = (nodeId) => {
@@ -718,7 +771,8 @@ const pathLit = (targetId) => {
   z-index: 30;
   display: grid;
   place-items: center;
-  pointer-events: none;
+  padding: 24px;
+  pointer-events: auto;
 }
 
 .modal-window {
@@ -813,19 +867,94 @@ const pathLit = (targetId) => {
 
 @media (max-width: 800px) {
   .progress {
-    left: 24px;
+    left: 16px;
     right: auto;
     top: auto;
-    bottom: 24px;
+    bottom: 16px;
+    max-width: calc(100vw - 32px);
+    gap: 7px;
+  }
+
+  .progress span {
+    width: 9px;
+    height: 9px;
+  }
+
+  .progress span.active {
+    width: 28px;
   }
 
   .camera {
     transition-duration: 900ms;
   }
 
+  .node {
+    width: 238px;
+    min-height: 104px;
+    padding: 13px 16px;
+  }
+
+  .node-title {
+    font-size: 25px;
+  }
+
+  .node-action {
+    font-size: 12px;
+  }
+
+  .canvas-label {
+    font-size: 14px;
+  }
+
+  .modal-layer {
+    place-items: end center;
+    padding: 16px;
+  }
+
   .modal-window {
-    width: min(86vw, 420px);
-    padding: 34px 28px;
+    width: min(100%, 430px);
+    max-height: min(520px, 74vh);
+    padding: 34px 28px 30px;
+    overflow: auto;
+  }
+
+  .modal-window h2 {
+    font-size: clamp(30px, 8vw, 40px);
+  }
+
+  .modal-window p {
+    margin-top: 22px;
+    font-size: clamp(17px, 4.5vw, 21px);
+  }
+
+  .modal-note {
+    margin-top: 32px;
+  }
+}
+
+@media (max-width: 520px) {
+  .node {
+    width: 226px;
+    min-height: 98px;
+    padding: 12px 14px;
+  }
+
+  .node-title {
+    font-size: 23px;
+  }
+
+  .cluster,
+  .canvas-label {
+    opacity: 0.7;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .camera,
+  .flow-path,
+  .node {
+    animation: none;
+    transition-duration: 1ms;
   }
 }
 </style>

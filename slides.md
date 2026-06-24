@@ -57,6 +57,25 @@ layout: full
   font-weight: 900;
   text-shadow: 0 0 36px rgba(125, 211, 252, 0.16);
 }
+
+@media (max-width: 640px) {
+  .title-cover {
+    padding: clamp(76px, 14vh, 96px) 24px 32px;
+  }
+
+  .title-cover::after {
+    left: 24px;
+    top: 28px;
+    font-size: 12px;
+    letter-spacing: 0.22em;
+  }
+
+  .title-cover h1 {
+    max-width: 12ch;
+    font-size: clamp(30px, 9vw, 40px);
+    line-height: 1.08;
+  }
+}
 </style>
 
 ---
