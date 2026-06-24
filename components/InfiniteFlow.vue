@@ -300,23 +300,12 @@ const isCompactViewport = computed(() => {
   return width <= 900 || height <= 560
 })
 
-const isPortraitViewport = computed(() => {
-  const { width, height } = viewportSize.value
-  return height > width
-})
-
 const canvasScale = computed(() => {
   if (!isCompactViewport.value) {
     return DESKTOP_SCALE
   }
 
   const { width, height } = viewportSize.value
-
-  if (isPortraitViewport.value) {
-    const fitScale = Math.min(width / 430, height / 720) * 0.88
-    return Math.min(0.88, Math.max(0.68, fitScale))
-  }
-
   const fitScale = Math.min(width / 640, height / 520) * 0.86
   return Math.min(0.68, Math.max(0.52, fitScale))
 })
@@ -334,9 +323,7 @@ const cameraStyle = computed(() => {
   const node = nodes[cameraStep.value] || nodes[0]
   const targetX = node.x + NODE_WIDTH / 2
   const targetY = node.y + NODE_HEIGHT / 2
-  const lift = isPortraitViewport.value
-    ? Math.min(110, Math.max(58, viewportSize.value.height * 0.12))
-    : viewportSize.value.height <= 520 ? 22 : 46
+  const lift = viewportSize.value.height <= 520 ? 22 : 46
   const x = -scale * (targetX - CANVAS_WIDTH / 2)
   const y = -scale * (targetY - CANVAS_HEIGHT / 2) - lift
 
@@ -424,9 +411,6 @@ const pathLit = (targetId) => {
 .viewport {
   position: fixed;
   inset: 0;
-  width: 100vw;
-  height: 100vh;
-  height: 100dvh;
   overflow: hidden;
   color: #d7deea;
   background:
@@ -886,7 +870,7 @@ const pathLit = (targetId) => {
     left: 16px;
     right: auto;
     top: auto;
-    bottom: max(16px, env(safe-area-inset-bottom));
+    bottom: 16px;
     max-width: calc(100vw - 32px);
     gap: 7px;
   }
@@ -924,7 +908,7 @@ const pathLit = (targetId) => {
 
   .modal-layer {
     place-items: end center;
-    padding: 16px 16px max(16px, env(safe-area-inset-bottom));
+    padding: 16px;
   }
 
   .modal-window {

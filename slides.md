@@ -7,52 +7,6 @@ layout: full
 </section>
 
 <style>
-:root {
-  --presentation-bg: #0b0f14;
-}
-
-html,
-body,
-#app,
-#page-root,
-#slide-container {
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  overflow: hidden;
-  background: var(--presentation-bg);
-}
-
-#slide-container {
-  background: var(--presentation-bg) !important;
-}
-
-#slide-content {
-  left: 0 !important;
-  top: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  height: 100dvh !important;
-  overflow: hidden !important;
-  background: var(--presentation-bg) !important;
-  transform: none !important;
-}
-
-#slide-content > .slidev-page,
-#slide-content .slidev-layout {
-  width: 100% !important;
-  height: 100% !important;
-  overflow: hidden !important;
-}
-
-#slide-content > .slidev-page {
-  scale: 1 !important;
-}
-
-#slide-content .slidev-layout {
-  padding: 0 !important;
-}
-
 .title-cover {
   position: fixed;
   inset: 0;
