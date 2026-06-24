@@ -1,5 +1,6 @@
 ---
 layout: full
+routerMode: hash
 ---
 
 <section class="title-cover">
