@@ -130,7 +130,210 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+
+const props = defineProps({
+  initialStep: {
+    type: Number,
+    default: 0
+  }
+})
+
+const REPO_BASE = '/Presentation-IA-agent/'
+
+const nodes = [
+  {
+    id: 'user',
+    type: 'Inicio',
+    title: 'Usuario',
+    text: 'Explica una necesidad en lenguaje natural.',
+    detail: 'La experiencia empieza con una pregunta, solicitud o caso de negocio.',
+    x: 170,
+    y: 570
+  },
+  {
+    id: 'chatbot',
+    type: 'Interfaz',
+    title: 'Chatbot',
+    text: 'Ordena la conversacion y pide datos faltantes.',
+    detail: 'El bot convierte la intencion inicial en una tarea clara y accionable.',
+    x: 515,
+    y: 500
+  },
+  {
+    id: 'agent',
+    type: 'Decision',
+    title: 'Agente IA',
+    text: 'Planifica, decide herramientas y controla el flujo.',
+    detail: 'El agente evalua contexto, reglas y herramientas antes de ejecutar.',
+    x: 930,
+    y: 560
+  },
+  {
+    id: 'skill',
+    type: 'Herramienta',
+    title: 'Skill',
+    text: 'Ejecuta una capacidad especializada.',
+    detail: 'Las skills encapsulan tareas como leer documentos, validar datos o generar respuestas.',
+    x: 1390,
+    y: 300
+  },
+  {
+    id: 'database',
+    type: 'Contexto',
+    title: 'Base de datos',
+    text: 'Aporta registros, historiales y reglas internas.',
+    detail: 'Los datos mantienen la respuesta conectada al negocio y a la realidad operativa.',
+    x: 1420,
+    y: 630
+  },
+  {
+    id: 'power',
+    type: 'Automatizacion',
+    title: 'Power Automate',
+    text: 'Dispara procesos y actualiza sistemas.',
+    detail: 'La IA no se queda en texto: puede crear tickets, enviar avisos y cerrar tareas.',
+    x: 1460,
+    y: 950
+  },
+  {
+    id: 'result',
+    type: 'Cierre',
+    title: 'Resultado',
+    text: 'Entrega una respuesta, accion o evidencia.',
+    detail: 'El flujo termina con una salida medible: decision, documento, registro o proceso iniciado.',
+    x: 2025,
+    y: 590
+  }
+]
+
+const paths = [
+  { id: 'p1', kind: 'flow', to: 'chatbot', d: 'M420 625 C460 625 470 560 515 555' },
+  { id: 'p2', kind: 'flow', to: 'agent', d: 'M765 555 C835 555 850 615 930 615' },
+  { id: 'p3', kind: 'generate', to: 'skill', d: 'M1180 610 C1260 470 1305 365 1390 360' },
+  { id: 'p4', kind: 'flow', to: 'database', d: 'M1180 630 C1265 630 1320 690 1420 690' },
+  { id: 'p5', kind: 'generate', to: 'power', d: 'M1165 690 C1290 850 1350 995 1460 1010' },
+  { id: 'p6', kind: 'flow', to: 'result', d: 'M1645 360 C1810 360 1880 620 2025 635' },
+  { id: 'p7', kind: 'flow', to: 'result', d: 'M1680 690 C1810 690 1900 650 2025 650' },
+  { id: 'p8', kind: 'generate', to: 'result', d: 'M1725 1010 C1905 965 1945 720 2025 680' }
+]
+
+const canvasScale = 0.74
+
+const cameraPositions = [
+  { x: 520, y: 85, rotate: -1 },
+  { x: 340, y: 115, rotate: 0.4 },
+  { x: 5, y: 55, rotate: -0.7 },
+  { x: -360, y: 235, rotate: 0.8 },
+  { x: -390, y: -40, rotate: -0.4 },
+  { x: -420, y: -310, rotate: 0.7 },
+  { x: -805, y: -5, rotate: -0.5 }
+]
+
+const internalStep = ref(Math.min(Math.max(props.initialStep, 0), nodes.length - 1))
+const selectedNodeId = ref(null)
+const focusedNodeId = ref(null)
+
+const activeStep = computed(() => {
+  return Math.min(Math.max(internalStep.value, 0), nodes.length - 1)
+})
+
+const selectedNode = computed(() => {
+  return nodes.find((node) => node.id === selectedNodeId.value)
+})
+
+const cameraStep = computed(() => {
+  if (!focusedNodeId.value) {
+    return activeStep.value
+  }
+
+  const selectedIndex = nodes.findIndex((node) => node.id === focusedNodeId.value)
+  return selectedIndex === -1 ? activeStep.value : selectedIndex
+})
+
+const cameraStyle = computed(() => {
+  const p = cameraPositions[cameraStep.value] || cameraPositions[0]
+
+  return {
+    transform: `translate(-50%, -50%) translate3d(${p.x}px, ${p.y}px, 0) scale(${canvasScale}) rotate(${p.rotate}deg)`
+  }
+})
+
+const goToStep = (step) => {
+  internalStep.value = Math.min(Math.max(step, 0), nodes.length - 1)
+  selectedNodeId.value = null
+  focusedNodeId.value = null
+}
+
+const goNext = () => {
+  goToStep(activeStep.value + 1)
+}
+
+const goPrev = () => {
+  goToStep(activeStep.value - 1)
+}
+
+const handleKeyboardNavigation = (event) => {
+  const keysToControl = [
+    'ArrowRight',
+    'ArrowDown',
+    'PageDown',
+    ' ',
+    'Spacebar',
+    'ArrowLeft',
+    'ArrowUp',
+    'PageUp'
+  ]
+
+  if (!keysToControl.includes(event.key)) return
+
+  event.preventDefault()
+  event.stopPropagation()
+  event.stopImmediatePropagation?.()
+
+  if (['ArrowRight', 'ArrowDown', 'PageDown', ' ', 'Spacebar'].includes(event.key)) {
+    goNext()
+    return
+  }
+
+  goPrev()
+}
+
+const fixBrokenGitHubPagesUrl = () => {
+  if (typeof window === 'undefined') return
+
+  const { origin, pathname, hash } = window.location
+  const duplicatedBase = '/Presentation-IA-agent/Presentation-IA-agent/'
+  const hashHasRepoBase = hash.startsWith('#/Presentation-IA-agent/')
+
+  if (!pathname.startsWith(duplicatedBase) && !hashHasRepoBase) return
+
+  window.location.replace(`${origin}${REPO_BASE}`)
+}
+
+onMounted(() => {
+  fixBrokenGitHubPagesUrl()
+  window.addEventListener('keydown', handleKeyboardNavigation, true)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleKeyboardNavigation, true)
+})
+
+const togglePopup = (nodeId) => {
+  selectedNodeId.value = selectedNodeId.value === nodeId ? null : nodeId
+  focusedNodeId.value = nodeId
+}
+
+const closePopup = () => {
+  selectedNodeId.value = null
+}
+
+const pathLit = (targetId) => {
+  const targetIndex = nodes.findIndex((node) => node.id === targetId)
+  return targetIndex <= activeStep.value
+}
+</script>import { computed, onMounted, ref, watch } from 'vue'
 
 const props = defineProps({
   step: {
