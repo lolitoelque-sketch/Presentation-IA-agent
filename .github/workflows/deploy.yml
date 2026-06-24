@@ -32,8 +32,11 @@ jobs:
         with:
           node-version: 22
 
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       - name: Build Slidev
         run: pnpm exec slidev build --base /Presentation-IA-agent/
