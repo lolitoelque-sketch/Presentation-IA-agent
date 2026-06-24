@@ -4,6 +4,7 @@ layout: full
 
 <section class="title-cover">
   <h1>Flujo operativo de agentes IA sobre un lienzo interactivo</h1>
+  <p>Usa la flecha derecha para entrar al flujo. Luego, dentro del lienzo, las flechas moverán la cámara sin cambiar la URL.</p>
 </section>
 
 <style>
@@ -13,6 +14,7 @@ layout: full
   display: grid;
   align-content: start;
   justify-items: start;
+  gap: 24px;
   padding: clamp(84px, 12vh, 120px) clamp(32px, 5vw, 70px);
   color: #8bd7ff;
   background:
@@ -46,10 +48,14 @@ layout: full
   letter-spacing: 0.32em;
 }
 
-.title-cover h1 {
+.title-cover h1,
+.title-cover p {
   position: relative;
-  max-width: 860px;
   margin: 0;
+}
+
+.title-cover h1 {
+  max-width: 860px;
   font-size: clamp(28px, 3.2vw, 44px);
   line-height: 1.12;
   letter-spacing: 0;
@@ -57,46 +63,17 @@ layout: full
   font-weight: 900;
   text-shadow: 0 0 36px rgba(125, 211, 252, 0.16);
 }
+
+.title-cover p {
+  max-width: 760px;
+  color: #8b94a6;
+  font-size: clamp(15px, 1.5vw, 20px);
+  line-height: 1.5;
+}
 </style>
 
 ---
 layout: full
 ---
 
-<InfiniteFlow :step="0" />
-
----
-layout: full
----
-
-<InfiniteFlow :step="1" />
-
----
-layout: full
----
-
-<InfiniteFlow :step="2" />
-
----
-layout: full
----
-
-<InfiniteFlow :step="3" />
-
----
-layout: full
----
-
-<InfiniteFlow :step="4" />
-
----
-layout: full
----
-
-<InfiniteFlow :step="5" />
-
----
-layout: full
----
-
-<InfiniteFlow :step="6" />
+<InfiniteFlow />
