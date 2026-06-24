@@ -62,42 +62,49 @@ routerMode: hash
 
 ---
 layout: full
+routerMode: hash
 ---
 
 <InfiniteFlow :step="0" />
 
 ---
 layout: full
+routerMode: hash
 ---
 
 <InfiniteFlow :step="1" />
 
 ---
 layout: full
+routerMode: hash
 ---
 
 <InfiniteFlow :step="2" />
 
 ---
 layout: full
+routerMode: hash
 ---
 
 <InfiniteFlow :step="3" />
 
 ---
 layout: full
+routerMode: hash
 ---
 
 <InfiniteFlow :step="4" />
 
 ---
 layout: full
+routerMode: hash
 ---
 
 <InfiniteFlow :step="5" />
 
 ---
 layout: full
+routerMode: hash
 ---
 
 <InfiniteFlow :step="6" />
