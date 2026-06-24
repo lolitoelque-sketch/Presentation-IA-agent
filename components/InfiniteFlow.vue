@@ -132,15 +132,6 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 
-const props = defineProps({
-  initialStep: {
-    type: Number,
-    default: 0
-  }
-})
-
-const REPO_BASE = '/Presentation-IA-agent/'
-
 const nodes = [
   {
     id: 'user',
@@ -230,13 +221,9 @@ const cameraPositions = [
   { x: -805, y: -5, rotate: -0.5 }
 ]
 
-const internalStep = ref(Math.min(Math.max(props.initialStep, 0), nodes.length - 1))
+const activeStep = ref(0)
 const selectedNodeId = ref(null)
 const focusedNodeId = ref(null)
-
-const activeStep = computed(() => {
-  return Math.min(Math.max(internalStep.value, 0), nodes.length - 1)
-})
 
 const selectedNode = computed(() => {
   return nodes.find((node) => node.id === selectedNodeId.value)
@@ -248,7 +235,12 @@ const cameraStep = computed(() => {
   }
 
   const selectedIndex = nodes.findIndex((node) => node.id === focusedNodeId.value)
-  return selectedIndex === -1 ? activeStep.value : selectedIndex
+
+  if (selectedIndex === -1) {
+    return activeStep.value
+  }
+
+  return selectedIndex
 })
 
 const cameraStyle = computed(() => {
@@ -260,7 +252,17 @@ const cameraStyle = computed(() => {
 })
 
 const goToStep = (step) => {
-  internalStep.value = Math.min(Math.max(step, 0), nodes.length - 1)
+  if (step < 0) {
+    activeStep.value = 0
+    return
+  }
+
+  if (step > nodes.length - 1) {
+    activeStep.value = nodes.length - 1
+    return
+  }
+
+  activeStep.value = step
   selectedNodeId.value = null
   focusedNodeId.value = null
 }
@@ -274,24 +276,17 @@ const goPrev = () => {
 }
 
 const handleKeyboardNavigation = (event) => {
-  const keysToControl = [
-    'ArrowRight',
-    'ArrowDown',
-    'PageDown',
-    ' ',
-    'Spacebar',
-    'ArrowLeft',
-    'ArrowUp',
-    'PageUp'
-  ]
+  const nextKeys = ['ArrowRight', 'ArrowDown', 'PageDown', ' ']
+  const prevKeys = ['ArrowLeft', 'ArrowUp', 'PageUp']
 
-  if (!keysToControl.includes(event.key)) return
+  if (![...nextKeys, ...prevKeys].includes(event.key)) {
+    return
+  }
 
   event.preventDefault()
   event.stopPropagation()
-  event.stopImmediatePropagation?.()
 
-  if (['ArrowRight', 'ArrowDown', 'PageDown', ' ', 'Spacebar'].includes(event.key)) {
+  if (nextKeys.includes(event.key)) {
     goNext()
     return
   }
@@ -299,20 +294,7 @@ const handleKeyboardNavigation = (event) => {
   goPrev()
 }
 
-const fixBrokenGitHubPagesUrl = () => {
-  if (typeof window === 'undefined') return
-
-  const { origin, pathname, hash } = window.location
-  const duplicatedBase = '/Presentation-IA-agent/Presentation-IA-agent/'
-  const hashHasRepoBase = hash.startsWith('#/Presentation-IA-agent/')
-
-  if (!pathname.startsWith(duplicatedBase) && !hashHasRepoBase) return
-
-  window.location.replace(`${origin}${REPO_BASE}`)
-}
-
 onMounted(() => {
-  fixBrokenGitHubPagesUrl()
   window.addEventListener('keydown', handleKeyboardNavigation, true)
 })
 
@@ -333,7 +315,9 @@ const pathLit = (targetId) => {
   const targetIndex = nodes.findIndex((node) => node.id === targetId)
   return targetIndex <= activeStep.value
 }
-</script>import { computed, onMounted, ref, watch } from 'vue'
+</script>
+
+import { computed, onMounted, ref, watch } from 'vue'
 
 const props = defineProps({
   step: {
